@@ -16,12 +16,12 @@ COPY src ./src/
 # Generar Prisma Client (requiere schema.prisma)
 RUN yarn prisma generate
 
-# Construir la aplicación (compilar TypeScript a JavaScript en ./dist)
-RUN yarn build
+# Construir la aplicación con más detalles
+# RUN yarn build # Comentamos el comando original
+RUN npx nest build --debug # Añadimos este para más logs
 
-# ----> AÑADIR ESTA LÍNEA PARA VERIFICAR <----
+# Verificar el contenido de /app/dist
 RUN echo "Contenido de /app/dist después del build:" && ls -la /app/dist
-# ----> FIN DE LA LÍNEA AÑADIDA <----
 
 # Stage 2: Production image
 FROM node:20-alpine
