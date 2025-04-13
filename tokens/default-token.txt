@@ -1,0 +1,4 @@
+Token: eyJjbGllbnRJZCI6ImRlZmF1bHQtY2xpZW50LWFwcCIsImFwcFZlcnNpb24iOiIxLjAuMCJ9
+API Key: 5ebdb8bdc01767a7bc89f8915ee97bc58bc802ea134c6736a62fc5bb22b09101
+
+Para usar en Authorization header: Bearer eyJjbGllbnRJZCI6ImRlZmF1bHQtY2xpZW50LWFwcCIsImFwcFZlcnNpb24iOiIxLjAuMCJ9
