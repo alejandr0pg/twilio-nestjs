@@ -1,36 +1,23 @@
-# Stage 1: Build the application
-FROM node:20-alpine AS builder
-WORKDIR /app
+# Use the official Node.js image as the base image
+FROM node:20
 
-# Copiar archivos de definición de dependencias
-COPY package.json yarn.lock ./
+# Set the working directory inside the container
+WORKDIR /usr/src/app
 
-# Instalar todas las dependencias (incluyendo devDependencies para build)
-RUN yarn install --frozen-lockfile
+# Copy package.json and package-lock.json to the working directory
+COPY package*.json ./
 
-# Copiar archivos necesarios para la compilación y Prisma
-COPY tsconfig.json tsconfig.build.json nest-cli.json ./
-COPY prisma ./prisma/
-COPY src ./src/
+# Install the application dependencies
+RUN npm install
 
-# Generar Prisma Client (requiere schema.prisma)
-RUN yarn prisma generate
+# Copy the rest of the application files
+COPY . .
 
-# Construir la aplicación con más detalles
-# RUN yarn build # Comentamos el comando original
-RUN npx nest build --debug # Añadimos este para más logs
+# Build the NestJS application
+RUN npm run build
 
-# Verificar el contenido de /app/dist
-RUN echo "Contenido de /app/dist después del build:" && ls -la /app/dist
-
-# Stage 2: Production image
-FROM node:20-alpine
-WORKDIR /app
-
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/prisma/schema.prisma ./prisma/schema.prisma
-
+# Expose the application port
 EXPOSE 3000
+
+# Command to run the application
 CMD ["node", "dist/main"]
