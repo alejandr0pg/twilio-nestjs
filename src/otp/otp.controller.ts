@@ -5,16 +5,16 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  // UseGuards,
+  UseGuards,
   Request,
 } from '@nestjs/common';
 import { OtpService } from './otp.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-// import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('otp')
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class OtpController {
   constructor(private readonly otpService: OtpService) {}
 
