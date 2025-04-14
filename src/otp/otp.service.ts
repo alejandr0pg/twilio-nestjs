@@ -84,7 +84,7 @@ export class OtpService {
   async verifyOtp(
     phone: string,
     code: string,
-  ): Promise<{ success: boolean; message: string; token: string; keyshare: string }> {
+  ): Promise<{ success: boolean; message: string; token?: string; keyshare?: string }> {
     // Buscar el código más reciente para el número de teléfono
     const otpCode = await this.prisma.otpCode.findFirst({
       where: {
