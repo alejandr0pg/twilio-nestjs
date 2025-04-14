@@ -1,4 +1,11 @@
-import { Controller, Post, Get, Body, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpStatus,
+  HttpException,
+} from '@nestjs/common';
 import { SiweService } from './siwe.service';
 import { SiweLoginDto } from './dto/siwe-login.dto';
 
@@ -20,7 +27,7 @@ export class SiweController {
   }
 
   @Get('clock')
-  async clock(): Promise<{ now: string }> {
-    return { now: new Date().toISOString() };
+  async clock(): Promise<{ now: number }> {
+    return { now: Date.now() };
   }
 }
