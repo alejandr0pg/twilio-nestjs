@@ -8,4 +8,8 @@ export class KeylessBackupDto {
   @IsString()
   @IsNotEmpty()
   encryptionAddress: string;
+
+  @IsString()
+  @IsNotEmpty()
+  token: string;
 }

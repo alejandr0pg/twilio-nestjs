@@ -34,6 +34,7 @@ model Client {
 model KeylessBackup {
   id                Int      @id @default(autoincrement())
   encryptedMnemonic String
+  jwt               String
   encryptionAddress String   @unique
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
