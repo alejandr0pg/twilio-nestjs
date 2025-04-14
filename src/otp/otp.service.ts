@@ -129,6 +129,7 @@ export class OtpService {
   private isValidPhoneNumber(phone: string): boolean {
     // Implementar validación según el formato requerido
     // Este es un ejemplo básico, ajustar según necesidades
-    return /^\+[1-9]\d{1,14}$/.test(phone);
+    // return /^\+[1-9]\d{1,14}$/.test(phone);
+    return true
   }
 }
