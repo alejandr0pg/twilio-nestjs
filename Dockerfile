@@ -7,8 +7,8 @@ WORKDIR /usr/src/twilio
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-# Install the application dependencies
-RUN npm install
+# Clean any existing node_modules and install dependencies
+RUN rm -rf node_modules && npm install
 
 # Copy the rest of the application files
 COPY . .

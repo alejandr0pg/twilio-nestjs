@@ -8,20 +8,20 @@ export class KeylessBackupService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(
-    clientId: number,
+    clientId: string,
     createKeylessBackupDto: CreateKeylessBackupDto,
   ): Promise<KeylessBackupDto> {
     const { encryptedMnemonic, encryptionAddress, token } =
       createKeylessBackupDto;
 
-    const existingBackup = await this.prisma.keylessBackup.findUnique({
+    const existingBackup = await this.prisma.keylessBackup.findFirst({
       where: { clientId },
     });
 
     if (existingBackup) {
       // Update the existing backup
       const updatedBackup = await this.prisma.keylessBackup.update({
-        where: { clientId: clientId },
+        where: { id: existingBackup.id },
         data: {
           encryptedMnemonic,
           encryptionAddress,
@@ -44,8 +44,8 @@ export class KeylessBackupService {
     return newBackup;
   }
 
-  async findOne(clientId: number): Promise<KeylessBackupDto | null> {
-    const backup = await this.prisma.keylessBackup.findUnique({
+  async findOne(clientId: string): Promise<KeylessBackupDto | null> {
+    const backup = await this.prisma.keylessBackup.findFirst({
       where: { clientId: clientId },
     });
 
@@ -56,8 +56,8 @@ export class KeylessBackupService {
     return backup;
   }
 
-  async remove(clientId: number): Promise<void> {
-    const backup = await this.prisma.keylessBackup.findUnique({
+  async remove(clientId: string): Promise<void> {
+    const backup = await this.prisma.keylessBackup.findFirst({
       where: { clientId: clientId },
     });
 
@@ -68,7 +68,7 @@ export class KeylessBackupService {
     }
 
     await this.prisma.keylessBackup.delete({
-      where: { clientId: clientId },
+      where: { id: backup.id },
     });
   }
 }
