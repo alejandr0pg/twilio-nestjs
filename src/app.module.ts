@@ -7,6 +7,8 @@ import { AppService } from './app.service';
 import { OtpModule } from './otp/otp.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { KeylessBackupModule } from './keyless-backup/keyless-backup.module';
+import { SiweModule } from './siwe/siwe.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     AuthModule,
     OtpModule,
+    KeylessBackupModule,
+    SiweModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -18,17 +18,33 @@ model OtpCode {
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([phone, code, isValid, expiresAt]) // Index for verification query - Added index for performance
 }
 
-// Add this model to your existing schema
-
 model Client {
-  id          Int      @id @default(autoincrement())
-  clientId    String   @unique
-  name        String
-  appVersion  String
-  apiKey      String   @unique
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  clientId      String   @unique
+  name          String
+  appVersion    String
+  apiKey        String   @unique
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relación con KeylessBackup (un cliente puede tener un respaldo)
+  keylessBackup KeylessBackup?
+}
+
+// Nuevo modelo para el respaldo
+model KeylessBackup {
+  id                 Int      @id @default(autoincrement())
+  encryptedMnemonic  String   @db.Text // Usar Text por si es largo
+  encryptionAddress  String   @unique // Dirección única para el respaldo
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relación con el Cliente (usuario)
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId Int    @unique // Clave foránea y única para asegurar un respaldo por cliente
 }
