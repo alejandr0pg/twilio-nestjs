@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { SiweService } from './siwe.service';
 import { SiweLoginDto } from './dto/siwe-login.dto';
+import { generateNonce } from 'siwe';
 
 @Controller('siwe')
 export class SiweController {
@@ -27,7 +28,7 @@ export class SiweController {
   }
 
   @Get('clock')
-  async clock(): Promise<{ now: number }> {
-    return { now: Date.now() };
+  async clock(): Promise<string> {
+    return generateNonce();
   }
 }
