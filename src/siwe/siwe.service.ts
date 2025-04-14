@@ -17,7 +17,7 @@ export class SiweService {
   ): Promise<string> {
     try {
       const siweMessage = new SiweMessage(message);
-      
+
       // Use the correct verification method
       const fields = await siweMessage.verify({ signature });
 
@@ -41,7 +41,6 @@ export class SiweService {
         });
       }
 
-      // Generate a JWT token for the client
       const payload = { clientId: client.clientId };
       const token = this.jwtService.sign(payload);
       return token;
