@@ -36,7 +36,7 @@ export class KeylessBackupController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete()
+  @Get('delete')
   @HttpCode(HttpStatus.NO_CONTENT) // 204 No Content on successful deletion
   async remove(@Request() req): Promise<void> {
     const clientId = req.user.clientId;
