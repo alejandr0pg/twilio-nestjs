@@ -11,7 +11,7 @@ export class KeylessBackupService {
     clientId: number,
     createKeylessBackupDto: CreateKeylessBackupDto,
   ): Promise<KeylessBackupDto> {
-    const { encryptedMnemonic, encryptionAddress } = createKeylessBackupDto;
+    const { encryptedMnemonic, encryptionAddress, token } = createKeylessBackupDto;
 
     // Check if a backup already exists for this client
     const existingBackup = await this.prisma.keylessBackup.findUnique({
@@ -25,8 +25,10 @@ export class KeylessBackupService {
         data: {
           encryptedMnemonic,
           encryptionAddress,
+          token
         },
       });
+
       return updatedBackup;
     } else {
       // Create a new backup
@@ -35,6 +37,7 @@ export class KeylessBackupService {
           clientId,
           encryptedMnemonic,
           encryptionAddress,
+          token
         },
       });
       return newBackup;
