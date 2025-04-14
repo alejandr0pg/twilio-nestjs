@@ -32,7 +32,7 @@ export class KeylessBackupService {
     }
 
     // Create a new backup
-    const newBackup = await this.prisma.keylessBackup.create({
+    const newBackup = await this.prisma.keylessBackup.createOr({
       data: {
         clientId,
         encryptedMnemonic,
