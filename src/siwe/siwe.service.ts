@@ -17,10 +17,12 @@ export class SiweService {
   ): Promise<string> {
     try {
       const siweMessage = new SiweMessage(message);
-      const fields = await siweMessage.validate(signature);
+      
+      // Use the correct verification method
+      const fields = await siweMessage.verify({ signature });
 
       // Now you can use the address to identify/create a user in your system.
-      const address = fields.address;
+      const address = fields.data.address;
 
       // Find the client by the address or create a new client.
       let client = await this.prisma.client.findUnique({
@@ -40,7 +42,7 @@ export class SiweService {
       }
 
       // Generate a JWT token for the client
-      const payload = { clientId: client.id };
+      const payload = { clientId: client.clientId };
       const token = this.jwtService.sign(payload);
       return token;
     } catch (e) {
