@@ -39,5 +39,5 @@ model KeylessBackup {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   clientId          String      @unique
-  client            Client   @relation(fields: [clientId], references: [id])
+  client            Client   @relation(fields: [clientId], references: [clientId])
 }
