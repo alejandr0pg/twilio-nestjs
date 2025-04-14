@@ -16,7 +16,7 @@ export class KeylessBackupService {
 
     const existingBackup = await this.prisma.keylessBackup.findUnique({
       where: { clientId },
-    })
+    });
 
     if (existingBackup) {
       // Update the existing backup
@@ -32,7 +32,7 @@ export class KeylessBackupService {
     }
 
     // Create a new backup
-    const newBackup = await this.prisma.keylessBackup.createOr({
+    const newBackup = await this.prisma.keylessBackup.create({
       data: {
         clientId,
         encryptedMnemonic,
@@ -45,7 +45,6 @@ export class KeylessBackupService {
   }
 
   async findOne(clientId: number): Promise<KeylessBackupDto | null> {
-
     const backup = await this.prisma.keylessBackup.findUnique({
       where: { clientId: clientId },
     });
@@ -58,7 +57,6 @@ export class KeylessBackupService {
   }
 
   async remove(clientId: number): Promise<void> {
-
     const backup = await this.prisma.keylessBackup.findUnique({
       where: { clientId: clientId },
     });
