@@ -1,31 +1,48 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Client } from '@prisma/client';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as jwt from 'jsonwebtoken';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const prisma = new PrismaClient();
 
 const CLIENT_ID = 'default-client-app';
+const JWT_SECRET_ENV = process.env.JWT_SECRET; // Get secret from environment variables
+const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h'; // Default expiration to 1 hour
 
 async function main() {
   console.log('Seeding database...');
 
-  // Verificar si ya existe un cliente por defecto
-  const existingClient = await prisma.client.findFirst({
+  if (!JWT_SECRET_ENV) { // Check the variable read from env
+    console.error('Error: JWT_SECRET environment variable is not set.');
+    console.error('Please define JWT_SECRET in your .env file or environment.');
+    process.exit(1);
+  }
+
+  // Define the secret with the correct type *after* the check
+  const jwtSecret: jwt.Secret = JWT_SECRET_ENV;
+
+  // Check if default client exists
+  let client = await prisma.client.findFirst({
     where: { clientId: CLIENT_ID },
   });
 
-  if (existingClient) {
+  if (client) {
     console.log('Default client already exists, generating token...');
-    await generateTokenForClient(existingClient);
+    // Pass the correctly typed secret to the function
+    await generateTokenForClient(client, jwtSecret);
     return;
   }
 
-  // Generar una API key aleatoria
+  // Generate a random API key
   const apiKey = crypto.randomBytes(32).toString('hex');
 
-  // Crear cliente por defecto en la base de datos
-  const client = await prisma.client.create({
+  // Create default client in the database
+  client = await prisma.client.create({
     data: {
       clientId: CLIENT_ID,
       name: 'Client Default Application',
@@ -36,38 +53,46 @@ async function main() {
 
   console.log(`Default client created with ID: ${client.id}`);
 
-  await generateTokenForClient(client);
+  // Pass the correctly typed secret to the function
+  await generateTokenForClient(client, jwtSecret);
 }
 
-async function generateTokenForClient(client: any) {
-  // Crear un payload para el cliente
-  const payload = {
+// Accept the secret as an argument with the correct type
+async function generateTokenForClient(client: Client, secret: jwt.Secret) {
+  // Payload for the JWT - explicitly typed
+  const payload: jwt.JwtPayload = {
+    sub: String(client.id), // Use client ID as subject
     clientId: client.clientId,
     appVersion: client.appVersion,
   };
 
-  // Generar un token simple (en producción usarías JWT)
-  const tokenData = Buffer.from(JSON.stringify(payload)).toString('base64');
+  // Generate the JWT using the passed secret and options
+  const tokenData = jwt.sign(payload, secret); // Pass explicit options
 
-  // Guardar el token en un archivo para fácil acceso
+  // Save the token and API key to a file for easy access
   const tokenDir = path.join(process.cwd(), 'tokens');
   const tokenFile = path.join(tokenDir, 'default-token.txt');
 
-  // Crear directorio si no existe
+  // Create directory if it doesn't exist
   if (!fs.existsSync(tokenDir)) {
     fs.mkdirSync(tokenDir, { recursive: true });
   }
 
-  // Escribir token y API key en el archivo
+  // Write token and API key to the file
   fs.writeFileSync(
     tokenFile,
-    `Token: ${tokenData}\nAPI Key: ${client.apiKey}\n\nPara usar en Authorization header: Bearer ${tokenData}`,
+    `Token: ${tokenData}
+API Key: ${client.apiKey}
+
+Para usar en Authorization header: Bearer ${tokenData}`,
   );
 
   console.log(
-    `Token generated for client ${client.clientId} and saved to ${tokenFile}`,
+    `JWT generated for client ${client.clientId} and saved to ${tokenFile}`,
   );
   console.log(`API Key: ${client.apiKey}`);
+  console.log(`Token expires in: ${JWT_EXPIRATION}`);
+
 
   return { token: tokenData, apiKey: client.apiKey };
 }
