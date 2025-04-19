@@ -41,9 +41,12 @@ export class KeylessBackupController {
   @Get()
   async findOne(@Request() request): Promise<KeylessBackupDto | null> {
     const phone = request.headers['x-phone'];
+    const response = this.keylessBackupService.findOne(phone as string);
+
+    Logger.debug('Response findOne:', response);
 
     try {
-      return this.keylessBackupService.findOne(phone as string);
+      return response;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
