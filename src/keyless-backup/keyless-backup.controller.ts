@@ -10,7 +10,6 @@ import {
   HttpStatus,
   Req,
   HttpException,
-  Query,
   NotFoundException,
   Logger,
 } from '@nestjs/common';
@@ -40,22 +39,11 @@ export class KeylessBackupController {
   }
 
   @Get()
-  async findOne(
-    @Request() req,
-    @Query('flow') flow?: 'Setup' | 'Restore',
-  ): Promise<KeylessBackupDto | null> {
-    const walletAddress = req.user.walletAddress;
+  async findOne(@Request() request): Promise<KeylessBackupDto | null> {
+    const phone = request.headers['x-phone'];
 
     try {
-      const backup = await this.keylessBackupService.findOne(
-        walletAddress as string,
-      );
-
-      if (!backup && flow === 'Restore') {
-        throw new NotFoundException('Keyless backup not found');
-      }
-
-      return backup;
+      return this.keylessBackupService.findOne(phone as string);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
