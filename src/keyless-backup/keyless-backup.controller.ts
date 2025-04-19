@@ -41,15 +41,11 @@ export class KeylessBackupController {
 
   @Get()
   async findOne(
-    @Request() req,
+    @Headers('walletAddress') walletAddress: string,
     @Query('flow') flow?: 'Setup' | 'Restore',
   ): Promise<KeylessBackupDto | null> {
-    const walletAddress = req.user.walletAddress;
-
     try {
-      const backup = await this.keylessBackupService.findOne(
-        walletAddress as string,
-      );
+      const backup = await this.keylessBackupService.findOne(walletAddress);
 
       if (!backup && flow === 'Restore') {
         throw new NotFoundException('Keyless backup not found');
