@@ -6,6 +6,7 @@ import {
   UseGuards,
   Request,
   HttpCode,
+  Headers,
   HttpStatus,
   Req,
   HttpException,
@@ -26,11 +27,9 @@ export class KeylessBackupController {
 
   @Post()
   async create(
-    @Request() req,
+    @Headers('walletAddress') walletAddress: string,
     @Body() createKeylessBackupDto: CreateKeylessBackupDto,
   ): Promise<KeylessBackupDto> {
-    const walletAddress = req.user.walletAddress as string;
-
     Logger.log('walletAddress', walletAddress);
     Logger.log('createKeylessBackupDto', createKeylessBackupDto);
 
