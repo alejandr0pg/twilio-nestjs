@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { SiweMessage, generateNonce } from 'siwe';
-import { ethers } from 'ethers';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -44,6 +43,7 @@ export class SiweService {
       const payload = { clientId: client.clientId };
       const token = this.jwtService.sign(payload);
       return token;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error('Invalid SIWE signature.');
     }

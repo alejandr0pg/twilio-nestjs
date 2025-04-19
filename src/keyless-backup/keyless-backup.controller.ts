@@ -9,10 +9,11 @@ import {
   HttpStatus,
   Req,
   HttpException,
+  Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { KeylessBackupService } from './keyless-backup.service';
 import { CreateKeylessBackupDto } from './dto/create-keyless-backup.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { KeylessBackupDto } from './dto/keyless-backup.dto';
 import { SiweAuthGuard } from '../auth/siwe-auth.guard';
 import { RequestWithSiweSession } from '../types/siwe';
@@ -22,7 +23,6 @@ import { RequestWithSiweSession } from '../types/siwe';
 export class KeylessBackupController {
   constructor(private readonly keylessBackupService: KeylessBackupService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   async create(
     @Request() req,
@@ -35,14 +35,34 @@ export class KeylessBackupController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
-  async findOne(@Request() req): Promise<KeylessBackupDto | null> {
+  async findOne(
+    @Request() req,
+    @Query('flow') flow?: 'Setup' | 'Restore',
+  ): Promise<KeylessBackupDto | null> {
     const walletAddress = req.user.walletAddress;
-    return this.keylessBackupService.findOne(walletAddress as string);
+
+    try {
+      const backup = await this.keylessBackupService.findOne(
+        walletAddress as string,
+      );
+
+      if (!backup && flow === 'Restore') {
+        throw new NotFoundException('Keyless backup not found');
+      }
+
+      return backup;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new HttpException(
+        'Error retrieving keyless backup',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Request() req): Promise<void> {
