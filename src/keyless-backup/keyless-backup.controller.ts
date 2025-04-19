@@ -41,9 +41,9 @@ export class KeylessBackupController {
   @Get()
   async findOne(@Request() request): Promise<KeylessBackupDto | null> {
     const phone = request.headers['x-phone'];
-    const response = this.keylessBackupService.findOne(phone as string);
+    const response = await this.keylessBackupService.findOne(phone as string);
 
-    Logger.debug('Response findOne:', response);
+    Logger.debug('KeylessBackupController; Response findOne:', response);
 
     try {
       return response;
