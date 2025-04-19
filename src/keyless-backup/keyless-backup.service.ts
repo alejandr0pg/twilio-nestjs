@@ -17,12 +17,11 @@ export class KeylessBackupService {
   ): Promise<KeylessBackupDto> {
     const { encryptedMnemonic, encryptionAddress } = createKeylessBackupDto;
 
-    const existingBackup = await this.prisma.keylessBackup.findFirst({
+    const existingBackup = await this.prisma.keylessBackup.findUnique({
       where: { walletAddress },
     });
 
     if (existingBackup) {
-      // Update the existing backup
       const updatedBackup = await this.prisma.keylessBackup.update({
         where: { id: existingBackup.id },
         data: {
@@ -32,10 +31,9 @@ export class KeylessBackupService {
         },
       });
 
-      return updatedBackup;
+      return this.mapToDto(updatedBackup);
     }
 
-    // Create a new backup
     const newBackup = await this.prisma.keylessBackup.create({
       data: {
         walletAddress,
@@ -45,35 +43,47 @@ export class KeylessBackupService {
       },
     });
 
-    return newBackup;
+    return this.mapToDto(newBackup);
   }
 
-  async findOne(clientId: string): Promise<KeylessBackupDto | null> {
-    const backup = await this.prisma.keylessBackup.findFirst({
-      where: { clientId: clientId },
+  async findOne(walletAddress: string): Promise<KeylessBackupDto | null> {
+    const backup = await this.prisma.keylessBackup.findUnique({
+      where: { walletAddress },
     });
 
     if (!backup) {
       return null;
     }
 
-    return backup;
+    return this.mapToDto(backup);
   }
 
-  async remove(clientId: string): Promise<void> {
-    const backup = await this.prisma.keylessBackup.findFirst({
-      where: { clientId: clientId },
+  async remove(walletAddress: string): Promise<void> {
+    const backup = await this.prisma.keylessBackup.findUnique({
+      where: { walletAddress },
     });
 
     if (!backup) {
       throw new NotFoundException(
-        `Keyless backup not found for client with ID: ${clientId}`,
+        `Keyless backup not found for wallet address: ${walletAddress}`,
       );
     }
 
     await this.prisma.keylessBackup.delete({
       where: { id: backup.id },
     });
+  }
+
+  private mapToDto(backup: any): KeylessBackupDto {
+    return {
+      encryptedMnemonic: backup.encryptedMnemonic || '',
+      encryptionAddress: backup.encryptionAddress || '',
+      walletAddress: backup.walletAddress,
+      phone: backup.phone,
+      status: backup.status,
+      flow: backup.flow,
+      origin: backup.origin,
+    };
   }
 
   async linkWalletToPhone(

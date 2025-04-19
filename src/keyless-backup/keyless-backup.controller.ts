@@ -28,9 +28,9 @@ export class KeylessBackupController {
     @Request() req,
     @Body() createKeylessBackupDto: CreateKeylessBackupDto,
   ): Promise<KeylessBackupDto> {
-    const clientId = req.user.clientId; // Assuming user.sub contains the user ID
+    const walletAddress = req.user.walletAddress as string;
     return this.keylessBackupService.create(
-      clientId as string,
+      walletAddress,
       createKeylessBackupDto,
     );
   }
@@ -38,16 +38,16 @@ export class KeylessBackupController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async findOne(@Request() req): Promise<KeylessBackupDto | null> {
-    const clientId = req.user.clientId;
-    return this.keylessBackupService.findOne(clientId as string);
+    const walletAddress = req.user.walletAddress;
+    return this.keylessBackupService.findOne(walletAddress as string);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('delete')
-  @HttpCode(HttpStatus.NO_CONTENT) // 204 No Content on successful deletion
+  @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Request() req): Promise<void> {
-    const clientId = req.user.clientId;
-    await this.keylessBackupService.remove(clientId as string);
+    const walletAddress = req.user.walletAddress;
+    await this.keylessBackupService.remove(walletAddress as string);
   }
 
   @Post('link-wallet')
