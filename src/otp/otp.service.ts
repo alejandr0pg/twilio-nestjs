@@ -30,9 +30,7 @@ export class OtpService {
   /**
    * Envía un código OTP al número de teléfono especificado
    */
-  async sendOtp(
-    phone: string,
-  ): Promise<{ success: boolean; message: string }> {
+  async sendOtp(phone: string): Promise<{ success: boolean; message: string }> {
     const code = this.generateOtpCode();
     const expirationMinutes = 5; // El código expira en 5 minutos
     const expiresAt = new Date(Date.now() + expirationMinutes * 60000);
@@ -79,13 +77,19 @@ export class OtpService {
   }
 
   /**
-     * Verifica si un código OTP es válido
-     */
+   * Verifica si un código OTP es válido
+   */
   async verifyOtp(
     phone: string,
     code: string,
-  ): Promise<{ success: boolean; message: string; token?: string; keyshare?: string }> {
-    // Buscar el código más reciente para el número de teléfono
+  ): Promise<{
+    success: boolean;
+    message: string;
+    token?: string;
+    keyshare?: string;
+    sessionId?: string;
+  }> {
+    // Verificar el código OTP
     const otpCode = await this.prisma.otpCode.findFirst({
       where: {
         phone,
@@ -107,23 +111,67 @@ export class OtpService {
       };
     }
 
-    // Invalidar el código después de verificarlo
+    // Generar un keyshare seguro
+    const keyshare = crypto.randomBytes(32).toString('hex');
+
+    // Crear una sesión OTP
+    const { token, sessionId } = await this.authService.createSessionFromOtp(
+      keyshare,
+      phone,
+    );
+
+    // Actualizar el registro OTP con el keyshare
     await this.prisma.otpCode.update({
       where: { id: otpCode.id },
-      data: { isValid: false },
+      data: {
+        isValid: false,
+        keyshare,
+      },
     });
-
-    // Generate access token
-    const accessToken = this.authService.generateAccessToken(phone);
-
-    // Generate a secure random keyshare (16 bytes -> 32 hex characters)
-    const keyshare = crypto.randomBytes(16).toString('hex');
 
     return {
       success: true,
-      message: 'Código OTP verificado correctamente.',
-      token: accessToken,
-      keyshare: keyshare, // Use the generated keyshare
+      message: 'Código OTP verificado correctamente',
+      token,
+      keyshare,
+      sessionId,
     };
+  }
+
+  async linkWalletToPhone(
+    phone: string,
+    walletAddress: string,
+    keyshare: string,
+  ) {
+    // Verificar que existe un OTP válido con ese keyshare
+    const otpRecord = await this.prisma.otpCode.findFirst({
+      where: {
+        phone,
+        keyshare,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!otpRecord) {
+      throw new BadRequestException('Invalid keyshare or phone number');
+    }
+
+    // Actualizar o crear el registro de KeylessBackup
+    return this.prisma.keylessBackup.upsert({
+      where: {
+        walletAddress,
+      },
+      update: {
+        phone,
+        updatedAt: new Date(),
+      },
+      create: {
+        walletAddress,
+        phone,
+        status: 'Completed',
+      },
+    });
   }
 }

@@ -15,8 +15,38 @@ model OtpCode {
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  keyshare  String?  // Add this field
+  wallet    String?  // Add this field
 
   @@index([phone, code, isValid, expiresAt])
+}
+
+model SiweSession {
+  id             String   @id
+  address        String
+  chainId        Int
+  message        String
+  signature      String
+  expirationTime DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([address])
+}
+
+model KeylessBackup {
+  id                Int      @id @default(autoincrement())
+  encryptedMnemonic String
+  encryptionAddress String   @unique
+  walletAddress     String
+  phone             String?
+  status           String   @default("NotStarted")
+  flow             String?
+  origin           String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([walletAddress, phone])
 }
 
 model Client {
@@ -30,12 +60,4 @@ model Client {
   updatedAt  DateTime @updatedAt
 }
 
-model KeylessBackup {
-  id                Int      @id @default(autoincrement())
-  encryptedMnemonic String
-  token             String
-  encryptionAddress String   @unique
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  clientId          String
-}
+

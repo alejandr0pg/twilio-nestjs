@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class KeylessBackupDto {
   @IsString()
@@ -11,5 +11,21 @@ export class KeylessBackupDto {
 
   @IsString()
   @IsNotEmpty()
-  token: string;
+  walletAddress: string;
+
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @IsString()
+  @IsOptional()
+  flow?: string;
+
+  @IsString()
+  @IsOptional()
+  origin?: string;
 }

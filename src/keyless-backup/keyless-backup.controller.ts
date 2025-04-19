@@ -2,18 +2,22 @@ import {
   Controller,
   Post,
   Get,
-  Delete,
   Body,
   UseGuards,
   Request,
   HttpCode,
   HttpStatus,
+  Req,
+  HttpException,
 } from '@nestjs/common';
 import { KeylessBackupService } from './keyless-backup.service';
 import { CreateKeylessBackupDto } from './dto/create-keyless-backup.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { KeylessBackupDto } from './dto/keyless-backup.dto';
+import { SiweAuthGuard } from '../auth/siwe-auth.guard';
+import { RequestWithSiweSession } from '../types/siwe';
 
+@UseGuards(SiweAuthGuard)
 @Controller('keyless-backup')
 export class KeylessBackupController {
   constructor(private readonly keylessBackupService: KeylessBackupService) {}
@@ -25,14 +29,17 @@ export class KeylessBackupController {
     @Body() createKeylessBackupDto: CreateKeylessBackupDto,
   ): Promise<KeylessBackupDto> {
     const clientId = req.user.clientId; // Assuming user.sub contains the user ID
-    return this.keylessBackupService.create(clientId, createKeylessBackupDto);
+    return this.keylessBackupService.create(
+      clientId as string,
+      createKeylessBackupDto,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   async findOne(@Request() req): Promise<KeylessBackupDto | null> {
     const clientId = req.user.clientId;
-    return this.keylessBackupService.findOne(clientId);
+    return this.keylessBackupService.findOne(clientId as string);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -40,6 +47,30 @@ export class KeylessBackupController {
   @HttpCode(HttpStatus.NO_CONTENT) // 204 No Content on successful deletion
   async remove(@Request() req): Promise<void> {
     const clientId = req.user.clientId;
-    await this.keylessBackupService.remove(clientId);
+    await this.keylessBackupService.remove(clientId as string);
+  }
+
+  @Post('link-wallet')
+  async linkWalletToPhone(
+    @Body() body: { phone: string; walletAddress: string; keyshare: string },
+    @Req() request: RequestWithSiweSession,
+  ) {
+    const { phone, walletAddress, keyshare } = body;
+    const { id: sessionId } = request.siweSession; // Use 'id' instead of 'sessionId'
+
+    try {
+      return await this.keylessBackupService.linkWalletToPhone(
+        phone,
+        walletAddress,
+        keyshare,
+        sessionId,
+      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Error linking wallet to phone';
+      throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+    }
   }
 }
