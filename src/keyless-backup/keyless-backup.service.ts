@@ -15,7 +15,8 @@ export class KeylessBackupService {
     walletAddress: string,
     createKeylessBackupDto: CreateKeylessBackupDto,
   ): Promise<KeylessBackupDto> {
-    const { encryptedMnemonic, encryptionAddress } = createKeylessBackupDto;
+    const { encryptedMnemonic, encryptionAddress, phone } =
+      createKeylessBackupDto;
 
     const existingBackup = await this.prisma.keylessBackup.findUnique({
       where: { walletAddress },
@@ -40,15 +41,16 @@ export class KeylessBackupService {
         encryptedMnemonic,
         encryptionAddress,
         status: 'NotStarted',
+        phone,
       },
     });
 
     return this.mapToDto(newBackup);
   }
 
-  async findOne(walletAddress: string): Promise<KeylessBackupDto | null> {
-    const backup = await this.prisma.keylessBackup.findUnique({
-      where: { walletAddress },
+  async findOne(phone: string): Promise<KeylessBackupDto | null> {
+    const backup = await this.prisma.keylessBackup.findFirst({
+      where: { phone },
     });
 
     if (!backup) {

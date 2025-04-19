@@ -12,4 +12,8 @@ export class CreateKeylessBackupDto {
   @IsString()
   @IsNotEmpty()
   token: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
 }
