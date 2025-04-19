@@ -36,9 +36,9 @@ model SiweSession {
 
 model KeylessBackup {
   id                Int      @id @default(autoincrement())
-  encryptedMnemonic String
-  encryptionAddress String   @unique
-  walletAddress     String
+  encryptedMnemonic String?  // Make it optional since we don't have it during linking
+  encryptionAddress String?  // Make it optional since we don't have it during linking
+  walletAddress     String   @unique  // Add unique constraint
   phone             String?
   status           String   @default("NotStarted")
   flow             String?
