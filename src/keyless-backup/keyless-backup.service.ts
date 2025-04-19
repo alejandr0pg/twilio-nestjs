@@ -23,16 +23,7 @@ export class KeylessBackupService {
     });
 
     if (existingBackup) {
-      const updatedBackup = await this.prisma.keylessBackup.update({
-        where: { id: existingBackup.id },
-        data: {
-          encryptedMnemonic,
-          encryptionAddress,
-          updatedAt: new Date(),
-        },
-      });
-
-      return this.mapToDto(updatedBackup);
+      return this.mapToDto(existingBackup);
     }
 
     const newBackup = await this.prisma.keylessBackup.create({
