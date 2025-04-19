@@ -111,14 +111,18 @@ export class OtpService {
       };
     }
 
-    // Generar un keyshare seguro
-    const keyshare = crypto.randomBytes(32).toString('hex');
+    const haveOtherKeyshare = await this.prisma.otpCode.findFirst({
+      where: {
+        phone,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
 
-    // Crear una sesión OTP
-    const { token, sessionId } = await this.authService.createSessionFromOtp(
-      keyshare,
-      phone,
-    );
+    // Generar un keyshare seguro
+    const keyshare =
+      haveOtherKeyshare?.keyshare ?? crypto.randomBytes(32).toString('hex');
 
     // Actualizar el registro OTP con el keyshare
     await this.prisma.otpCode.update({
@@ -128,6 +132,12 @@ export class OtpService {
         keyshare,
       },
     });
+
+    // Crear una sesión OTP
+    const { token, sessionId } = await this.authService.createSessionFromOtp(
+      keyshare as string,
+      phone,
+    );
 
     return {
       success: true,
