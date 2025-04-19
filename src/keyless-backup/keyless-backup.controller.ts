@@ -12,6 +12,7 @@ import {
   HttpException,
   NotFoundException,
   Logger,
+  Res,
 } from '@nestjs/common';
 import { KeylessBackupService } from './keyless-backup.service';
 import { CreateKeylessBackupDto } from './dto/create-keyless-backup.dto';
@@ -39,14 +40,17 @@ export class KeylessBackupController {
   }
 
   @Get()
-  async findOne(@Request() request): Promise<KeylessBackupDto | null> {
+  async findOne(
+    @Res() res,
+    @Request() request,
+  ): Promise<KeylessBackupDto | null> {
     const phone = request.headers['x-phone'];
     const response = await this.keylessBackupService.findOne(phone as string);
 
     Logger.debug('KeylessBackupController; Response findOne:', response);
 
     try {
-      return response;
+      return res.status(HttpStatus.OK).json(response);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
