@@ -11,6 +11,7 @@ import {
   HttpException,
   Query,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { KeylessBackupService } from './keyless-backup.service';
 import { CreateKeylessBackupDto } from './dto/create-keyless-backup.dto';
@@ -29,6 +30,10 @@ export class KeylessBackupController {
     @Body() createKeylessBackupDto: CreateKeylessBackupDto,
   ): Promise<KeylessBackupDto> {
     const walletAddress = req.user.walletAddress as string;
+
+    Logger.log('walletAddress', walletAddress);
+    Logger.log('createKeylessBackupDto', createKeylessBackupDto);
+
     return this.keylessBackupService.create(
       walletAddress,
       createKeylessBackupDto,
