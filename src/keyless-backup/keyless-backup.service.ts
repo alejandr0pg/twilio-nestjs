@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateKeylessBackupDto } from './dto/create-keyless-backup.dto';
 import { KeylessBackupDto } from './dto/keyless-backup.dto';
+import { CheckPhoneResponseDto } from './dto/check-phone.dto';
 
 @Injectable()
 export class KeylessBackupService {
@@ -65,6 +66,58 @@ export class KeylessBackupService {
     await this.prisma.keylessBackup.delete({
       where: { id: backup.id },
     });
+  }
+
+  /**
+   * Verifica si un número de teléfono ya existe en el sistema keyless backup
+   * para una wallet específica o cualquier wallet
+   */
+  async checkPhoneExists(
+    phone: string,
+    walletAddress?: string,
+  ): Promise<CheckPhoneResponseDto> {
+    try {
+      // Buscar por teléfono y wallet específica si se proporciona
+      if (walletAddress) {
+        const backup = await this.prisma.keylessBackup.findFirst({
+          where: {
+            phone,
+            walletAddress,
+          },
+        });
+
+        if (backup) {
+          return {
+            exists: true,
+            walletAddress: backup.walletAddress,
+            phone: backup.phone || undefined,
+          };
+        }
+      }
+
+      // Buscar solo por teléfono si no se especifica wallet o no se encontró con wallet específica
+      const backup = await this.prisma.keylessBackup.findFirst({
+        where: { phone },
+      });
+
+      if (backup) {
+        return {
+          exists: true,
+          walletAddress: backup.walletAddress,
+          phone: backup.phone as string,
+        };
+      }
+
+      return {
+        exists: false,
+      };
+    } catch (error) {
+      // En caso de error, retornar que no existe para no bloquear el flujo
+      console.error('Error checking phone existence:', error);
+      return {
+        exists: false,
+      };
+    }
   }
 
   private mapToDto(backup: any): KeylessBackupDto {
