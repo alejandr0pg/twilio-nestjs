@@ -12,6 +12,7 @@ import { OtpService } from './otp.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { EmergencyRecoveryDto } from './dto/emergency-recovery.dto';
 
 @Controller('otp')
 @UseGuards(JwtAuthGuard)
@@ -39,5 +40,19 @@ export class OtpController {
     );
 
     return this.otpService.verifyOtp(verifyOtpDto.phone, verifyOtpDto.code);
+  }
+
+  @Post('emergency-recovery')
+  @HttpCode(HttpStatus.OK)
+  async emergencyRecovery(@Body() emergencyRecoveryDto: EmergencyRecoveryDto, @Request() req) {
+    console.log(
+      `Client with ID ${req.user.id} requesting emergency recovery for phone: ${emergencyRecoveryDto.phone}`,
+    );
+
+    return this.otpService.emergencyRecovery(
+      emergencyRecoveryDto.phone,
+      emergencyRecoveryDto.walletAddress,
+      emergencyRecoveryDto.adminCode
+    );
   }
 }

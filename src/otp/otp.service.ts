@@ -35,19 +35,37 @@ export class OtpService {
     const expirationMinutes = 5; // El código expira en 5 minutos
     const expiresAt = new Date(Date.now() + expirationMinutes * 60000);
 
-    // Invalidar códigos anteriores para el mismo número
+    // Buscar keyshare existente para reutilizar
+    const existingKeyshare = await this.prisma.otpCode.findFirst({
+      where: {
+        phone,
+        keyshare: {
+          not: null,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Invalidar códigos anteriores para el mismo número (excepto códigos de emergencia)
     await this.prisma.otpCode.updateMany({
-      where: { phone, isValid: true },
+      where: { 
+        phone, 
+        isValid: true,
+        isEmergency: false
+      },
       data: { isValid: false },
     });
 
-    // Guardar el nuevo código en la base de datos
+    // Guardar el nuevo código en la base de datos con keyshare existente
     await this.prisma.otpCode.create({
       data: {
         phone,
         code,
         expiresAt,
         isValid: true,
+        keyshare: existingKeyshare?.keyshare, // Asignar keyshare existente
       },
     });
 
@@ -111,18 +129,21 @@ export class OtpService {
       };
     }
 
-    const haveOtherKeyshare = await this.prisma.otpCode.findFirst({
+    // Buscar keyshare existente válido para este teléfono
+    const existingKeyshare = await this.prisma.otpCode.findFirst({
       where: {
         phone,
+        keyshare: {
+          not: null,
+        },
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: 'desc',
       },
     });
 
-    // Generar un keyshare seguro
-    const keyshare =
-      haveOtherKeyshare?.keyshare ?? crypto.randomBytes(32).toString('hex');
+    // Usar keyshare existente o generar uno nuevo
+    const keyshare = existingKeyshare?.keyshare ?? crypto.randomBytes(32).toString('hex');
 
     // Actualizar el registro OTP con el keyshare
     await this.prisma.otpCode.update({
@@ -183,5 +204,92 @@ export class OtpService {
         status: 'Completed',
       },
     });
+  }
+
+  /**
+   * Recuperación de emergencia para usuarios con problemas de keyshare
+   * Solo debe ser usado por administradores para casos críticos
+   */
+  async emergencyRecovery(
+    phone: string,
+    walletAddress: string,
+    adminCode: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    keyshare?: string;
+    token?: string;
+    sessionId?: string;
+  }> {
+    // Verificar código de administrador
+    const validAdminCode = this.configService.get('EMERGENCY_RECOVERY_CODE');
+    if (!validAdminCode || adminCode !== validAdminCode) {
+      throw new BadRequestException('Invalid admin code');
+    }
+
+    // Verificar que existe un backup para esta wallet y teléfono
+    const backup = await this.prisma.keylessBackup.findFirst({
+      where: {
+        walletAddress,
+        phone,
+      },
+    });
+
+    if (!backup) {
+      throw new BadRequestException('No backup found for this wallet and phone');
+    }
+
+    // Buscar keyshare existente válido para este teléfono
+    const existingOtp = await this.prisma.otpCode.findFirst({
+      where: {
+        phone,
+        keyshare: {
+          not: null,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Usar keyshare existente o generar uno nuevo
+    const keyshare = existingOtp?.keyshare || crypto.randomBytes(32).toString('hex');
+
+    // Crear un OTP de emergencia válido por 7 días
+    const emergencyOtp = await this.prisma.otpCode.create({
+      data: {
+        phone,
+        code: '777777', // Código especial para recuperación de emergencia
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+        isValid: true,
+        keyshare,
+        isEmergency: true, // Marcar como emergencia para protección
+      },
+    });
+
+    // Crear sesión de emergencia
+    const { token, sessionId } = await this.authService.createSessionFromOtp(
+      keyshare,
+      phone,
+    );
+
+    // Actualizar el estado del backup
+    await this.prisma.keylessBackup.update({
+      where: {
+        walletAddress,
+      },
+      data: {
+        status: 'Emergency_Recovery',
+        updatedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Emergency recovery OTP created successfully',
+      keyshare,
+      token,
+      sessionId,
+    };
   }
 }

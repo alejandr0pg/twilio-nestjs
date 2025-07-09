@@ -8,15 +8,16 @@ datasource db {
 }
 
 model OtpCode {
-  id        Int      @id @default(autoincrement())
-  phone     String
-  code      String
-  isValid   Boolean  @default(true)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  keyshare  String?  // Add this field
-  wallet    String?  // Add this field
+  id          Int      @id @default(autoincrement())
+  phone       String
+  code        String
+  isValid     Boolean  @default(true)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  keyshare    String?  // Add this field
+  wallet      String?  // Add this field
+  isEmergency Boolean  @default(false) // Add this field
 
   @@index([phone, code, isValid, expiresAt])
 }
